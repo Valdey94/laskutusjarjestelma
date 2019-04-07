@@ -1,0 +1,135 @@
+-- Tässä on taulujen luontilauseet sekä esimerkkitarvikedatan lisäyslauseet varmuuden vuoksi,
+-- ohjelma luo ne kyllä automattisestikin mikäli niitä ei ole olemassa tietokannassa.
+
+-- Nämä ovat ne viiteavaimet, jotka relaatioiden välillä ovat. Ne auttavat hahmottamaan paremmin tietokannan rakennetta.
+-- urakkatarjous.tk_nro = tyokohde.tk_nro
+-- luettelee.ut_nro = urakkatarjous.ut_nro
+-- luettelee.t_nro = tarvike.t_nro
+-- kaytetaan.t_nro = tarvike.t_nro
+-- kaytetaan.ts_nro = tyosuoritus.ts_nro
+-- tyosuoritus.ut_nro = urakkatarjous.ut_nro
+-- tyosuoritus.tk_nro = tyokohde.tk_nro
+-- pohjautuu.ts_nro = tyosuoritus.ts_nro
+-- pohjautuu.tt_nro = tyotyyppi.tt_nro
+-- tyokohde.hetu = asiakas.hetu
+
+
+CREATE TABLE urakkatarjous(
+ut_nro SERIAL,
+hyvaksytty VARCHAR(5) NOT NULL,
+osissa VARCHAR(5),
+urakkasumma DECIMAL(8,2),
+tk_nro INT NOT NULL,
+PRIMARY KEY (ut_nro),
+FOREIGN KEY (tk_nro) REFERENCES tyokohde);
+
+CREATE TABLE luettelee(
+ut_nro INT,
+t_nro INT,
+maara INT,
+PRIMARY KEY (ut_nro, t_nro),
+FOREIGN KEY (ut_nro) REFERENCES urakkatarjous,
+FOREIGN KEY (t_nro) REFERENCES tarvike);
+
+CREATE TABLE tarvike(
+t_nro SERIAL,
+nimike VARCHAR(32) NOT NULL,
+varastotilanne INT,
+yksikko VARCHAR(16) NOT NULL,
+myyntihinta DECIMAL (7,2),
+sisaanostohinta DECIMAL (7,2) NOT NULL,
+alv DECIMAL (4,2) NOT NULL,
+PRIMARY KEY (t_nro));
+
+CREATE TABLE kaytetaan(
+t_nro INT,
+ts_nro INT,
+maara INT NOT NULL,
+alennuspros DECIMAL(4,2),
+PRIMARY KEY (t_nro, ts_nro),
+FOREIGN KEY (t_nro) REFERENCES tarvike,
+FOREIGN KEY (ts_nro) REFERENCES tyosuoritus);
+
+CREATE TABLE tyosuoritus(
+ts_nro SERIAL,
+tyyppi VARCHAR(32),
+hinta INT,
+kesto INT,
+alennuspros DECIMAL (4,2),
+ut_nro INT,
+tk_nro INT NOT NULL,
+PRIMARY KEY (ts_nro),
+FOREIGN KEY (ut_nro) REFERENCES urakkatarjous,
+FOREIGN KEY (tk_nro) REFERENCES tyokohde);
+
+CREATE TABLE tyokohde(
+tk_nro SERIAL,
+osoite VARCHAR(32) NOT NULL,
+hetu CHAR(11) NOT NULL,
+PRIMARY KEY (tk_nro),
+FOREIGN KEY (hetu) REFERENCES asiakas);
+
+CREATE TABLE lasku(
+l_nro INT,
+monesko INT,
+loppusumma DECIMAL(8,2),
+alv_osuus DECIMAL(8,2), 
+urakka VARCHAR(5),
+toimituspvm DATE,
+maksupvm DATE,
+viivastyskorko DECIMAL(4,2),
+ktv DECIMAL(6,2),
+erapvm DATE,
+myohassa VARCHAR(12),
+tk_nro INT NOT NULL,
+PRIMARY KEY (l_nro, monesko),
+FOREIGN KEY (tk_nro) REFERENCES tyokohde);
+
+CREATE TABLE asiakas(
+hetu CHAR(11), 
+etunimi VARCHAR(32) NOT NULL,
+sukunimi VARCHAR(32) NOT NULL,
+osoite VARCHAR(32) NOT NULL,
+PRIMARY KEY (hetu));
+
+
+-- esimerkkitarvikedataa
+
+INSERT INTO tarvike (nimike, varastotilanne, yksikko, myyntihinta, sisaanostohinta, alv)
+VALUES ('pistorasia', '100', 'kpl', '12.50', '10', '24');
+INSERT INTO tarvike (nimike, varastotilanne, yksikko, myyntihinta, sisaanostohinta, alv)
+VALUES ('sahkojohto', '1000', 'm', '5.00', '4.00', '24');
+INSERT INTO tarvike (nimike, varastotilanne, yksikko, myyntihinta, sisaanostohinta, alv)
+VALUES ('kaapelikela', '1200', 'm', '3.00', '2.40', '24');
+INSERT INTO tarvike (nimike, varastotilanne, yksikko, myyntihinta, sisaanostohinta, alv)
+VALUES ('kohdelamppu', '100', 'kpl', '10', '8.00', '24');
+INSERT INTO tarvike (nimike, varastotilanne, yksikko, myyntihinta, sisaanostohinta, alv)
+VALUES ('hehkulamppu', '200', 'kpl', '1', '0.80', '24');
+INSERT INTO tarvike (nimike, varastotilanne, yksikko, myyntihinta, sisaanostohinta, alv)
+VALUES ('tulppasulake', '300', 'kpl', '0.40', '0.32', '24');
+INSERT INTO tarvike (nimike, varastotilanne, yksikko, myyntihinta, sisaanostohinta, alv)
+VALUES ('kytkin', '100', 'kpl', '1', '8', '24');
+INSERT INTO tarvike (nimike, varastotilanne, yksikko, myyntihinta, sisaanostohinta, alv)
+VALUES ('maakaapeli', '1000', 'm', '4', '3.20', '24');
+INSERT INTO tarvike (nimike, varastotilanne, yksikko, myyntihinta, sisaanostohinta, alv)
+VALUES ('dieselgeneraattori', '3', 'kpl', '5000', '4000', '24');
+INSERT INTO tarvike (nimike, varastotilanne, yksikko, myyntihinta, sisaanostohinta, alv)
+VALUES ('1-vaihe-bensiinigeneraattori', '8', 'kpl', '1250', '1000', '24');
+INSERT INTO tarvike (nimike, varastotilanne, yksikko, myyntihinta, sisaanostohinta, alv)
+VALUES ('3-vaihe-bensiinigeneraattori', '6', 'kpl', '2500', '2000', '24');
+INSERT INTO tarvike (nimike, varastotilanne, yksikko, myyntihinta, sisaanostohinta, alv)
+VALUES ('akkulaturi', '80', 'kpl', '12.50', '10', '24');
+INSERT INTO tarvike (nimike, varastotilanne, yksikko, myyntihinta, sisaanostohinta, alv)
+VALUES ('litium-paristo', '100', 'kpl', '7.50', '6', '24');
+INSERT INTO tarvike (nimike, varastotilanne, yksikko, myyntihinta, sisaanostohinta, alv)
+VALUES ('aurinkopaneeli', '40', 'kpl', '87.50', '70', '24');
+INSERT INTO tarvike (nimike, varastotilanne, yksikko, myyntihinta, sisaanostohinta, alv)
+VALUES ('muovilista', '1000', 'm', '5', '4', '24');
+INSERT INTO tarvike (nimike, varastotilanne, yksikko, myyntihinta, sisaanostohinta, alv)
+VALUES ('laajakaista-antenni', '40', 'kpl', '18.75', '15', '24');
+INSERT INTO tarvike (nimike, varastotilanne, yksikko, myyntihinta, sisaanostohinta, alv)
+VALUES ('jatkojohto', '1200', 'm', '4.00', '3.20', '24');
+INSERT INTO tarvike (nimike, varastotilanne, yksikko, myyntihinta, sisaanostohinta, alv)
+VALUES ('opaskirja', '100', 'kpl', '10', '8', '10');
+
+
